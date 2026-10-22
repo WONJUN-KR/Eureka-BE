@@ -4,6 +4,7 @@ import com.footprint.global.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -34,8 +35,11 @@ public class SecurityConfig {
                                 "/api/posts",
                                 "/api/posts/{postId}",
                                 "/api/regions/**",
-                                "/api/categories/**"
+                                "/api/categories/**",
+                                "/uploads/**"
                         ).permitAll()
+                        // 게시글 읽기 화면은 비로그인 공개 - 이미지 목록도 조회는 허용
+                        .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/images").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

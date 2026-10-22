@@ -3,7 +3,7 @@ services:
     image: postgres:17
     container_name: footprint-db
     ports:
-      - "5432:5432"
+      - "${FOOTPRINT_DB_PORT:-5455}:5432"
     environment:
       POSTGRES_DB: footprint
       POSTGRES_USER: footprint

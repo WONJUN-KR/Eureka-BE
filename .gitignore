@@ -56,3 +56,6 @@ logs/
 
 ### Blog ###
 docs/blog/
+
+### 로컬 업로드 (local 프로필 LocalImageStorage) ###
+uploads/

@@ -1,5 +1,7 @@
 package com.footprint.domain.user.controller;
 
+import com.footprint.domain.post.dto.PostResponse;
+import com.footprint.domain.post.service.PostService;
 import com.footprint.domain.user.dto.UpdateUserRequest;
 import com.footprint.domain.user.dto.UserResponse;
 import com.footprint.domain.user.service.UserService;
@@ -9,6 +11,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final PostService postService;
 
     @Operation(summary = "내 프로필 조회")
     @GetMapping("/me")
@@ -44,5 +51,14 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         userService.deleteMyAccount(userDetails.getUserId());
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(summary = "내가 쓴 글 목록")
+    @GetMapping("/me/posts")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyPosts(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<PostResponse> response = postService.getMyPosts(userDetails.getUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
