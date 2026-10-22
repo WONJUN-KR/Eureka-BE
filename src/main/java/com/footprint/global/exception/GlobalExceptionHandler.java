@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -24,6 +25,12 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .orElse("유효성 검증에 실패했습니다.");
         return ResponseEntity.badRequest().body(ApiResponse.error(400, message));
+    }
+
+    // 없는 정적 파일·경로(/uploads/없는파일 등)는 500 이 아니라 404
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResource(NoResourceFoundException e) {
+        return ResponseEntity.status(404).body(ApiResponse.error(404, "리소스를 찾을 수 없습니다."));
     }
 
     @ExceptionHandler(Exception.class)

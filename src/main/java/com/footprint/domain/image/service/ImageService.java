@@ -4,20 +4,15 @@ import com.footprint.domain.image.dto.ImageResponse;
 import com.footprint.domain.image.entity.PostImage;
 import com.footprint.domain.image.exception.ImageException;
 import com.footprint.domain.image.repository.PostImageRepository;
+import com.footprint.domain.image.storage.ImageStorage;
 import com.footprint.domain.post.entity.Post;
 import com.footprint.domain.post.exception.PostException;
 import com.footprint.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -32,13 +27,7 @@ public class ImageService {
 
     private final PostImageRepository postImageRepository;
     private final PostRepository postRepository;
-    private final S3Client s3Client;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
-
-    @Value("${cloud.aws.region.static}")
-    private String region;
+    private final ImageStorage imageStorage;
 
     @Transactional
     public ImageResponse uploadImage(Long userId, Long postId, MultipartFile file) {
@@ -56,7 +45,7 @@ public class ImageService {
 
         validateFileType(file);
 
-        String url = uploadToS3(file, postId);
+        String url = imageStorage.store(file, buildKey(file, postId));
         Integer maxSeq = postImageRepository.findMaxSeqByPostId(postId);
         int seq = (maxSeq == null ? 0 : maxSeq) + 1;
 
@@ -79,7 +68,7 @@ public class ImageService {
             throw ImageException.unauthorized();
         }
 
-        deleteFromS3(image.getUrl());
+        imageStorage.delete(image.getUrl());
         postImageRepository.delete(image);
     }
 
@@ -101,45 +90,12 @@ public class ImageService {
         }
     }
 
-    private String uploadToS3(MultipartFile file, Long postId) {
-        try {
-            String filename = file.getOriginalFilename();
-            if (filename == null || !filename.contains(".")) {
-                throw ImageException.invalidFileType();
-            }
-            String extension = filename.substring(filename.lastIndexOf("."));
-            String key = "posts/" + postId + "/" + UUID.randomUUID() + extension;
-
-            PutObjectRequest request = PutObjectRequest.builder()
-                    .bucket(bucket)
-                    .key(key)
-                    .contentType(file.getContentType())
-                    .build();
-
-            s3Client.putObject(request, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-
-            return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, key);
-        } catch (IOException e) {
-            throw ImageException.uploadFailed();
+    private String buildKey(MultipartFile file, Long postId) {
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.contains(".")) {
+            throw ImageException.invalidFileType();
         }
-    }
-
-    private void deleteFromS3(String url) {
-        int index = url.lastIndexOf(".com/");
-        if (index == -1 || index + 5 >= url.length()) {
-            throw ImageException.invalidUrl();
-        }
-        String key = url.substring(index + 5);
-
-        DeleteObjectRequest request = DeleteObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-
-        try {
-            s3Client.deleteObject(request);
-        } catch (Exception e) {
-            throw ImageException.deleteFailed();
-        }
+        String extension = filename.substring(filename.lastIndexOf("."));
+        return "posts/" + postId + "/" + UUID.randomUUID() + extension;
     }
 }
