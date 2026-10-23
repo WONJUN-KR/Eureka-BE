@@ -1,7 +1,7 @@
 -- 로컬 시드 데이터 (application-local.yml 의 spring.sql.init 으로 시작할 때마다 들어감 - 로컬 전용)
 -- 지역·도시·카테고리·세부 테마는 2021 원본 프로젝트(유레카) 글쓰기 화면(write.jsp) 목록 기준
 -- 원본의 '누구와'(main_option: 나홀로 여행·가족 여행 등) 단계는 현재 엔티티에 없어서 세부 테마(detail_option)만 sub_categories 로 넣음
--- 테스트 계정: test@footprint.local / footprint-local-1234  (로컬 DB 에만 존재. 좋아요용 보조 계정 3개는 로그인 불필요)
+-- 테스트 계정: test@eureka.local / eureka-local-1234  (로컬 DB 에만 존재. 좋아요용 보조 계정 3개는 로그인 불필요)
 
 INSERT INTO common_code_groups (code, name, description, is_active, created_at, updated_at) VALUES
   ('CATEGORY_TYPE', '카테고리 유형', '게시글 카테고리 유형', true, now(), now());
@@ -99,10 +99,10 @@ INSERT INTO sub_categories (category_id, name, created_at, updated_at) VALUES
   (3, '펫페어', now(), now());
 
 INSERT INTO users (email, password, nickname, name, email_verified, role, status, created_at, updated_at) VALUES
-  ('test@footprint.local', '$2a$10$cfeHUNrQOfuQRvo/0tHXa.6mPKgVwmm/FnjCMTzeKcCrOM8hf5ohe', '발자취테스터', '테스트', true, 'USER', 'ACTIVE', now(), now()),
-  ('walker1@footprint.local', '$2a$10$cfeHUNrQOfuQRvo/0tHXa.6mPKgVwmm/FnjCMTzeKcCrOM8hf5ohe', '바다산책러', '보조1', true, 'USER', 'ACTIVE', now(), now()),
-  ('walker2@footprint.local', '$2a$10$cfeHUNrQOfuQRvo/0tHXa.6mPKgVwmm/FnjCMTzeKcCrOM8hf5ohe', '골목탐험가', '보조2', true, 'USER', 'ACTIVE', now(), now()),
-  ('walker3@footprint.local', '$2a$10$cfeHUNrQOfuQRvo/0tHXa.6mPKgVwmm/FnjCMTzeKcCrOM8hf5ohe', '맛집지도', '보조3', true, 'USER', 'ACTIVE', now(), now());
+  ('test@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '발자취테스터', '테스트', true, 'USER', 'ACTIVE', now(), now()),
+  ('walker1@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '바다산책러', '보조1', true, 'USER', 'ACTIVE', now(), now()),
+  ('walker2@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '골목탐험가', '보조2', true, 'USER', 'ACTIVE', now(), now()),
+  ('walker3@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '맛집지도', '보조3', true, 'USER', 'ACTIVE', now(), now());
 
 INSERT INTO posts (user_id, city_id, sub_category_id, title, content, summary, view_count, like_count, status, created_at, updated_at) VALUES
   (1, 6, 2, '강릉 안목해변 아침 산책', '해 뜨기 전에 안목해변을 걸었다. 커피거리 문 열기 전이라 조용했고, 파도 소리만 들렸다.', '안목해변 해돋이 산책 코스', 120, 4, 'PUBLISHED', now() - interval '240 hour', now() - interval '240 hour'),

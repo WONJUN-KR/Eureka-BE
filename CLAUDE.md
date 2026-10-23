@@ -1,4 +1,4 @@
-# FootPrint Backend
+# 유레카 Backend
 
 여행했던 지역의 경로를 기록하고 공유하는 여행 커뮤니티 서비스
 
@@ -22,7 +22,7 @@
 ## 패키지 구조
 
 ```
-com.footprint
+com.eureka
 ├── global/           # config, common, security, exception, util
 └── domain/{feature}/ # controller, service, repository, entity, dto
 ```

@@ -1,5 +1,5 @@
 spring:
   application:
-    name: footprint
+    name: eureka
   profiles:
     active: local

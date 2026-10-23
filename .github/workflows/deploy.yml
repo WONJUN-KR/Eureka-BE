@@ -29,8 +29,8 @@ jobs:
 
       - name: Docker Build & Push
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/footprint-be:latest .
-          docker push ${{ secrets.DOCKER_USERNAME }}/footprint-be:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/eureka-be:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/eureka-be:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -39,8 +39,8 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_USERNAME }}/footprint-be:latest
-            docker stop footprint-be || true
-            docker rm footprint-be || true
-            docker run -d --name footprint-be -p 8080:8080 --env-file ~/.env ${{ secrets.DOCKER_USERNAME }}/footprint-be:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/eureka-be:latest
+            docker stop eureka-be || true
+            docker rm eureka-be || true
+            docker run -d --name eureka-be -p 8080:8080 --env-file ~/.env ${{ secrets.DOCKER_USERNAME }}/eureka-be:latest
             docker image prune -f
