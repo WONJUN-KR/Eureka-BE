@@ -1,15 +1,15 @@
 services:
   postgres:
     image: postgres:17
-    container_name: footprint-db
+    container_name: eureka-db
     ports:
-      - "${FOOTPRINT_DB_PORT:-5455}:5432"
+      - "${EUREKA_DB_PORT:-5455}:5432"
     environment:
-      POSTGRES_DB: footprint
-      POSTGRES_USER: footprint
-      POSTGRES_PASSWORD: footprint1234
+      POSTGRES_DB: eureka
+      POSTGRES_USER: eureka
+      POSTGRES_PASSWORD: eureka1234
     volumes:
-      - footprint-data:/var/lib/postgresql/data
+      - eureka-data:/var/lib/postgresql/data
 
 volumes:
-  footprint-data:
+  eureka-data:

@@ -1,1 +1,1 @@
-rootProject.name = "footprint"
+rootProject.name = "eureka"

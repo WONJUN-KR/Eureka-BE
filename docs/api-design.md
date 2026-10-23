@@ -1,4 +1,4 @@
-# FootPrint API 설계
+# 유레카 API 설계
 
 ## 공통 응답 형식
 

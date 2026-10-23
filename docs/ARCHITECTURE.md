@@ -1,10 +1,10 @@
-# Footprint 아키텍처
+# 유레카 아키텍처
 
 ## 패키지 구조
 
 ```
-com.footprint
-├── FootprintApplication.java
+com.eureka
+├── EurekaApplication.java
 ├── global/
 │   ├── config/
 │   ├── common/

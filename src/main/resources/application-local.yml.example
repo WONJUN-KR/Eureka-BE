@@ -7,9 +7,9 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5455/footprint
-    username: footprint
-    password: footprint1234
+    url: jdbc:postgresql://localhost:5455/eureka
+    username: eureka
+    password: eureka1234
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -37,4 +37,4 @@ cloud:
     region:
       static: ap-northeast-2
     s3:
-      bucket: footprint-local-dummy
+      bucket: eureka-local-dummy
