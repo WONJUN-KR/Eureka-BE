@@ -95,7 +95,8 @@ public class PostService {
 
     @Transactional
     public PostDetailResponse updatePost(Long userId, Long postId, UpdatePostRequest request) {
-        Post post = postRepository.findById(postId)
+        // 사진 업로드와 겹치지 않게 게시글 행을 잠그고 진행
+        Post post = postRepository.findByIdWithLock(postId)
                 .orElseThrow(PostException::notFound);
 
         if (!post.isOwner(userId)) {

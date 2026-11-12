@@ -39,7 +39,7 @@ public class CreatePostRequest {
     // 들른 순서대로
     @NotEmpty(message = "장소를 1곳 이상 넣어 주세요")
     @Size(max = 20, message = "장소는 최대 20곳까지 넣을 수 있습니다")
-    private List<@Valid PlaceRequest> places;
+    private List<@Valid @NotNull PlaceRequest> places;
 
     public Post toEntity(User user, City city, SubCategory subCategory) {
         return Post.builder()
