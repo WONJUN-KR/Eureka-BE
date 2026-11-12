@@ -5,6 +5,9 @@ import com.eureka.domain.image.entity.PostImage;
 import com.eureka.domain.image.exception.ImageException;
 import com.eureka.domain.image.repository.PostImageRepository;
 import com.eureka.domain.image.storage.ImageStorage;
+import com.eureka.domain.place.entity.PostPlace;
+import com.eureka.domain.place.exception.PlaceException;
+import com.eureka.domain.place.repository.PostPlaceRepository;
 import com.eureka.domain.post.entity.Post;
 import com.eureka.domain.post.exception.PostException;
 import com.eureka.domain.post.repository.PostRepository;
@@ -22,15 +25,18 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class ImageService {
 
-    private static final int MAX_IMAGE_COUNT = 10;
+    // 장소 20곳 x 3장 중 일부 + 게시글 사진 - 한 글에 너무 많이 쌓이지 않게 30장으로 제한
+    private static final int MAX_IMAGE_COUNT = 30;
+    private static final int MAX_PLACE_IMAGE_COUNT = 3;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
 
     private final PostImageRepository postImageRepository;
     private final PostRepository postRepository;
+    private final PostPlaceRepository postPlaceRepository;
     private final ImageStorage imageStorage;
 
     @Transactional
-    public ImageResponse uploadImage(Long userId, Long postId, MultipartFile file) {
+    public ImageResponse uploadImage(Long userId, Long postId, Long placeId, MultipartFile file) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostException::notFound);
 
@@ -43,6 +49,17 @@ public class ImageService {
             throw ImageException.maxCountExceeded();
         }
 
+        // 장소 사진이면 그 장소가 이 게시글 것인지, 장소당 장수를 넘지 않는지 확인
+        PostPlace place = null;
+        if (placeId != null) {
+            place = postPlaceRepository.findById(placeId)
+                    .filter(p -> p.getPost().getId().equals(postId))
+                    .orElseThrow(PlaceException::notFound);
+            if (postImageRepository.countByPlaceId(placeId) >= MAX_PLACE_IMAGE_COUNT) {
+                throw PlaceException.maxImageCountExceeded();
+            }
+        }
+
         validateFileType(file);
 
         String url = imageStorage.store(file, buildKey(file, postId));
@@ -51,6 +68,7 @@ public class ImageService {
 
         PostImage image = PostImage.builder()
                 .post(post)
+                .place(place)
                 .url(url)
                 .seq(seq)
                 .build();

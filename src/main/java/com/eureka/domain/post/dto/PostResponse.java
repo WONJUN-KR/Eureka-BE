@@ -1,8 +1,10 @@
 package com.eureka.domain.post.dto;
 
+import com.eureka.domain.place.dto.PlacePoint;
 import com.eureka.domain.post.entity.Post;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record PostResponse(
         Long id,
@@ -15,10 +17,11 @@ public record PostResponse(
         Integer likeCount,
         String status,
         String thumbnailUrl,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        List<PlacePoint> places
 ) {
-    // thumbnailUrl: 첫 번째(seq 최소) 이미지 URL, 이미지가 없으면 null
-    public static PostResponse from(Post post, String thumbnailUrl) {
+    // thumbnailUrl: 첫 번째(seq 최소) 이미지 URL, 이미지가 없으면 null / places: 들른 순서대로 이름 · 위치
+    public static PostResponse from(Post post, String thumbnailUrl, List<PlacePoint> places) {
         return new PostResponse(
                 post.getId(),
                 post.getTitle(),
@@ -30,7 +33,8 @@ public record PostResponse(
                 post.getLikeCount(),
                 post.getStatus(),
                 thumbnailUrl,
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                places
         );
     }
 }
