@@ -17,6 +17,10 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
 
     int countByPostId(Long postId);
 
+    int countByPlaceId(Long placeId);
+
+    List<PostImage> findByPlaceIdIn(Collection<Long> placeIds);
+
     @Query("SELECT MAX(pi.seq) FROM PostImage pi WHERE pi.post.id = :postId")
     Integer findMaxSeqByPostId(@Param("postId") Long postId);
 }

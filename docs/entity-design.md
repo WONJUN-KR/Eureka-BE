@@ -2,7 +2,7 @@
 
 ## 개요
 
-- **V1 (MVP)**: users, posts, regions, cities, categories, sub_categories, post_images, post_likes, recommend_cities, common_code_groups, common_codes
+- **V1 (MVP)**: users, posts, post_places, regions, cities, categories, sub_categories, post_images, post_likes, recommend_cities, common_code_groups, common_codes
 - **V2**: 인프라/품질 (Docker, CI/CD, 테스트, 배포 환경)
 - **V3**: comments, bookmarks, post_reports
 - **V4**: tags, post_tags, 대댓글 (comment.parent_id), follows, notifications
@@ -109,9 +109,34 @@
 |------|------|------|
 | id | Long (PK) | |
 | post_id | Long (FK → posts) | 게시글 |
+| place_id | Long (FK → post_places, nullable) | 장소 사진이면 그 장소, 게시글 전체 사진이면 null |
 | url | String | S3 이미지 URL |
 | seq | Integer | 표시 순서 |
 | created_at | LocalDateTime | |
+
+---
+
+## post_places
+
+게시글(여행 한 번)에서 들른 장소. seq 순서대로 이으면 지도 경로가 됨.
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | |
+| post_id | Long (FK → posts) | 게시글 |
+| seq | Integer | 들른 순서 (1부터) |
+| name | String(100) | 장소 이름 |
+| address | String | 주소 (nullable) |
+| latitude | Double | 위도 |
+| longitude | Double | 경도 |
+| kakao_place_id | String(20) | 카카오 장소 검색 ID (nullable) |
+| sub_category_id | Long (FK → sub_categories, nullable) | 장소 종류 |
+| memo | String(100) | 한 줄 메모 (nullable) |
+| visited_at | LocalTime | 들른 시간 (nullable) |
+| created_at / updated_at | LocalDateTime | |
+
+- 게시글당 1~20곳, 장소당 사진 0~3장
+- 수정 시 장소 목록을 통째로 보냄 → 빠진 장소는 삭제되고 그 장소 사진은 게시글 사진으로 남음
 
 ---
 
