@@ -32,14 +32,12 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/api/auth/**",
-                                "/api/posts",
-                                "/api/posts/{postId}",
                                 "/api/regions/**",
                                 "/api/categories/**",
                                 "/uploads/**"
                         ).permitAll()
-                        // 게시글 읽기 화면은 비로그인 공개 - 이미지 목록도 조회는 허용
-                        .requestMatchers(HttpMethod.GET, "/api/posts/{postId}/images").permitAll()
+                        // 게시글 읽기는 비로그인 공개 - 작성 · 수정 · 삭제는 로그인 필요
+                        .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/{postId}", "/api/posts/{postId}/images").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
