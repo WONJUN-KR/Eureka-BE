@@ -2,6 +2,7 @@ package com.eureka.global.exception;
 
 import com.eureka.global.common.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,6 +26,14 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .orElse("유효성 검증에 실패했습니다.");
         return ResponseEntity.badRequest().body(ApiResponse.error(400, message));
+    }
+
+    // 형식이 틀린 JSON (시간 "25:99", 숫자 자리에 글자 등)은 500 이 아니라 400
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException e) {
+        CommonErrorCode errorCode = CommonErrorCode.INVALID_REQUEST;
+        return ResponseEntity.status(errorCode.getStatus())
+                .body(ApiResponse.error(errorCode.getStatus().value(), errorCode.getMessage()));
     }
 
     // 없는 정적 파일·경로(/uploads/없는파일 등)는 500 이 아니라 404
