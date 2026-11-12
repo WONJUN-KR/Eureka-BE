@@ -1,6 +1,8 @@
 package com.eureka.domain.user.service;
 
+import com.eureka.domain.post.repository.PostRepository;
 import com.eureka.domain.user.dto.UpdateUserRequest;
+import com.eureka.domain.user.dto.UserProfileResponse;
 import com.eureka.domain.user.dto.UserResponse;
 import com.eureka.domain.user.entity.User;
 import com.eureka.domain.user.exception.UserException;
@@ -15,11 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PostRepository postRepository;
 
     public UserResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserException::notFound);
         return UserResponse.from(user);
+    }
+
+    public UserProfileResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserException::notFound);
+        return UserProfileResponse.from(user, postRepository.countByUserIdAndStatus(userId, "PUBLISHED"));
     }
 
     @Transactional

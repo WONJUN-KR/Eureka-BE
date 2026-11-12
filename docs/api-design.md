@@ -29,6 +29,9 @@
 | GET | `/api/users/me` | 내 프로필 조회 |
 | PATCH | `/api/users/me` | 내 프로필 수정 |
 | DELETE | `/api/users/me` | 회원 탈퇴 |
+| GET | `/api/users/me/posts` | 내가 쓴 글 목록 |
+| GET | `/api/users/{userId}` | 사용자 공개 프로필 (닉네임 · 공개 글 수, 비로그인 가능) |
+| GET | `/api/users/{userId}/posts` | 사용자가 쓴 공개 글 목록 (비로그인 가능) |
 
 ### Post (게시글)
 
