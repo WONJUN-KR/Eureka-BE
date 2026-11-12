@@ -25,7 +25,7 @@ com.eureka
     ├── follow/           # v4: 팔로우
     ├── notification/     # v4: 알림
     ├── report/           # v3: 신고
-    ├── search/           # v3: 검색
+    ├── search/           # 비어 있음 - 검색은 GET /api/posts?keyword= (post 도메인)
     └── admin/            # v5: 관리자
         ├── code/         # 공통코드 관리
         ├── member/       # 사용자 관리

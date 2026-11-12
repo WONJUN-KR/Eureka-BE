@@ -38,7 +38,7 @@
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/posts` | 게시글 작성 (들른 장소 1~20곳 포함) |
-| GET | `/api/posts` | 게시글 목록 조회 (필터링, 페이징) |
+| GET | `/api/posts` | 게시글 목록 조회 (필터링, 페이징, `keyword` 로 제목 · 내용 · 장소 이름 검색) |
 | GET | `/api/posts/{postId}` | 게시글 상세 조회 |
 | PATCH | `/api/posts/{postId}` | 게시글 수정 (places 를 보내면 장소 목록 통째로 교체) |
 | DELETE | `/api/posts/{postId}` | 게시글 삭제 |
@@ -93,6 +93,4 @@
 
 ### Search (검색)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/search` | 게시글 검색 |
+별도 경로 없이 `GET /api/posts?keyword=` 로 검색 (지역 · 카테고리 필터와 함께 쓸 수 있음)
