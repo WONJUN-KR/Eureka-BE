@@ -56,8 +56,20 @@ public class PostService {
         return PostDetailResponse.from(post, placeService.getPlaces(post.getId()));
     }
 
-    public Page<PostResponse> getPosts(Long regionId, Long cityId, Long categoryId, Long subCategoryId, Pageable pageable) {
-        return toResponsePage(postRepository.findAllWithFilters(regionId, cityId, categoryId, subCategoryId, pageable));
+    public Page<PostResponse> getPosts(Long regionId, Long cityId, Long categoryId, Long subCategoryId, String keyword, Pageable pageable) {
+        return toResponsePage(postRepository.findAllWithFilters(regionId, cityId, categoryId, subCategoryId, toLikePattern(keyword), pageable));
+    }
+
+    // 검색어 -> 대소문자 무시 부분 일치 패턴 (%, _ 는 글자 그대로 찾도록 이스케이프), 비어 있으면 검색 안 함
+    private String toLikePattern(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return null;
+        }
+        String escaped = keyword.strip().toLowerCase()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        return "%" + escaped + "%";
     }
 
     public Page<PostResponse> getMyPosts(Long userId, Pageable pageable) {
