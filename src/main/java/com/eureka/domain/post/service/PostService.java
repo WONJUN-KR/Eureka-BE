@@ -60,6 +60,14 @@ public class PostService {
         return toResponsePage(postRepository.findByUserId(userId, pageable));
     }
 
+    // 다른 사람이 보는 사용자 글 목록 - 공개된 글만
+    public Page<PostResponse> getUserPosts(Long userId, Pageable pageable) {
+        if (!userRepository.existsById(userId)) {
+            throw UserException.notFound();
+        }
+        return toResponsePage(postRepository.findByUserIdAndStatus(userId, "PUBLISHED", pageable));
+    }
+
     // 페이지의 게시글 이미지를 한 번에 조회해 게시글별 첫 이미지를 썸네일로 사용
     private Page<PostResponse> toResponsePage(Page<Post> posts) {
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
