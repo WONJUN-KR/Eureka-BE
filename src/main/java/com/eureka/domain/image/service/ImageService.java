@@ -26,7 +26,7 @@ import java.util.UUID;
 public class ImageService {
 
     // 장소 사진은 장소당 3장(최대 20곳 x 3장), 장소 없이 올리는 게시글 사진은 따로 10장
-    private static final int MAX_POST_IMAGE_COUNT = 10;
+    public static final int MAX_POST_IMAGE_COUNT = 10;
     private static final int MAX_PLACE_IMAGE_COUNT = 3;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
 
@@ -37,7 +37,8 @@ public class ImageService {
 
     @Transactional
     public ImageResponse uploadImage(Long userId, Long postId, Long placeId, MultipartFile file) {
-        Post post = postRepository.findById(postId)
+        // 장소 수정과 겹치지 않게 게시글 행을 잠그고 진행
+        Post post = postRepository.findByIdWithLock(postId)
                 .orElseThrow(PostException::notFound);
 
         if (!post.isOwner(userId)) {

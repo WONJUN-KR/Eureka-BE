@@ -10,6 +10,7 @@ import com.eureka.domain.image.storage.ImageStorage;
 import com.eureka.domain.place.exception.PlaceException;
 import com.eureka.domain.post.dto.CreatePostRequest;
 import com.eureka.domain.post.dto.PostDetailResponse;
+import com.eureka.domain.post.dto.UpdatePostRequest;
 import com.eureka.domain.post.service.PostService;
 import com.eureka.domain.region.entity.City;
 import com.eureka.domain.region.entity.Region;
@@ -94,6 +95,24 @@ class ImageLimitTest {
             upload(placeId);
         }
         assertThatThrownBy(() -> upload(placeId)).isInstanceOf(PlaceException.class);
+    }
+
+    @Test
+    void removingPlaceCannotPushPostPhotosOverLimit() {
+        for (int i = 0; i < 9; i++) {
+            upload(null);
+        }
+        Long placeId = post.places().get(0).id();
+        upload(placeId);
+        upload(placeId);
+
+        // 장소 없는 사진 9장 + 빠지는 장소 사진 2장 = 11장 -> 수정 거부, 장소 · 사진 그대로
+        List<Map<String, Object>> kept = post.places().stream().skip(1)
+                .map(p -> Map.<String, Object>of("id", p.id(), "name", p.name(), "latitude", 35.1, "longitude", 129.0))
+                .toList();
+        UpdatePostRequest request = objectMapper.convertValue(Map.of("places", kept), UpdatePostRequest.class);
+        assertThatThrownBy(() -> postService.updatePost(user.getId(), post.id(), request))
+                .isInstanceOf(ImageException.class);
     }
 
     private void upload(Long placeId) {

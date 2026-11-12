@@ -5,7 +5,9 @@ import com.eureka.domain.category.exception.CategoryException;
 import com.eureka.domain.category.repository.SubCategoryRepository;
 import com.eureka.domain.image.dto.ImageResponse;
 import com.eureka.domain.image.entity.PostImage;
+import com.eureka.domain.image.exception.ImageException;
 import com.eureka.domain.image.repository.PostImageRepository;
+import com.eureka.domain.image.service.ImageService;
 import com.eureka.domain.place.dto.PlacePoint;
 import com.eureka.domain.place.dto.PlaceRequest;
 import com.eureka.domain.place.dto.PlaceResponse;
@@ -73,8 +75,12 @@ public class PlaceService {
                 .filter(place -> !keptIds.contains(place.getId()))
                 .toList();
         if (!removed.isEmpty()) {
-            postImageRepository.findByPlaceIdIn(removed.stream().map(PostPlace::getId).toList())
-                    .forEach(PostImage::detachPlace);
+            // 빠진 장소의 사진은 게시글 사진으로 남음 - 남는 사진까지 합쳐 장소 없는 사진 한도를 넘으면 수정 거부
+            List<PostImage> detached = postImageRepository.findByPlaceIdIn(removed.stream().map(PostPlace::getId).toList());
+            if (postImageRepository.countByPostIdAndPlaceIsNull(post.getId()) + detached.size() > ImageService.MAX_POST_IMAGE_COUNT) {
+                throw ImageException.maxCountExceeded();
+            }
+            detached.forEach(PostImage::detachPlace);
             postPlaceRepository.deleteAll(removed);
         }
         postPlaceRepository.saveAll(newPlaces);
