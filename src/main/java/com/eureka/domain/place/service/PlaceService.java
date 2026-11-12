@@ -54,6 +54,15 @@ public class PlaceService {
         Map<Long, PostPlace> existing = postPlaceRepository.findByPostIdOrderBySeqAsc(post.getId()).stream()
                 .collect(Collectors.toMap(PostPlace::getId, Function.identity()));
 
+        // 빠진 장소의 사진은 게시글 사진으로 남음 - 남는 사진까지 합쳐 장소 없는 사진 한도를 넘으면 아무것도 바꾸기 전에 수정 거부
+        Set<Long> requestedIds = requests.stream().map(PlaceRequest::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        List<Long> removedIds = existing.keySet().stream().filter(id -> !requestedIds.contains(id)).toList();
+        List<PostImage> detached = removedIds.isEmpty() ? List.of() : postImageRepository.findByPlaceIdIn(removedIds);
+        if (!detached.isEmpty()
+                && postImageRepository.countByPostIdAndPlaceIsNull(post.getId()) + detached.size() > ImageService.MAX_POST_IMAGE_COUNT) {
+            throw ImageException.maxCountExceeded();
+        }
+
         Set<Long> keptIds = new HashSet<>();
         List<PostPlace> newPlaces = new ArrayList<>();
         for (int i = 0; i < requests.size(); i++) {
@@ -75,11 +84,6 @@ public class PlaceService {
                 .filter(place -> !keptIds.contains(place.getId()))
                 .toList();
         if (!removed.isEmpty()) {
-            // 빠진 장소의 사진은 게시글 사진으로 남음 - 남는 사진까지 합쳐 장소 없는 사진 한도를 넘으면 수정 거부
-            List<PostImage> detached = postImageRepository.findByPlaceIdIn(removed.stream().map(PostPlace::getId).toList());
-            if (postImageRepository.countByPostIdAndPlaceIsNull(post.getId()) + detached.size() > ImageService.MAX_POST_IMAGE_COUNT) {
-                throw ImageException.maxCountExceeded();
-            }
             detached.forEach(PostImage::detachPlace);
             postPlaceRepository.deleteAll(removed);
         }

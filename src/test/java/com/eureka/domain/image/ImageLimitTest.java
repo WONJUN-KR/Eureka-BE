@@ -5,9 +5,12 @@ import com.eureka.domain.category.entity.SubCategory;
 import com.eureka.domain.category.repository.CategoryRepository;
 import com.eureka.domain.category.repository.SubCategoryRepository;
 import com.eureka.domain.image.exception.ImageException;
+import com.eureka.domain.image.repository.PostImageRepository;
 import com.eureka.domain.image.service.ImageService;
 import com.eureka.domain.image.storage.ImageStorage;
+import com.eureka.domain.place.entity.PostPlace;
 import com.eureka.domain.place.exception.PlaceException;
+import com.eureka.domain.place.repository.PostPlaceRepository;
 import com.eureka.domain.post.dto.CreatePostRequest;
 import com.eureka.domain.post.dto.PostDetailResponse;
 import com.eureka.domain.post.dto.UpdatePostRequest;
@@ -19,6 +22,7 @@ import com.eureka.domain.region.repository.RegionRepository;
 import com.eureka.domain.user.entity.User;
 import com.eureka.domain.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,6 +55,9 @@ class ImageLimitTest {
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private SubCategoryRepository subCategoryRepository;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private PostPlaceRepository postPlaceRepository;
+    @Autowired private PostImageRepository postImageRepository;
+    @Autowired private EntityManager em;
     @MockitoBean private ImageStorage imageStorage;
 
     private User user;
@@ -106,13 +114,21 @@ class ImageLimitTest {
         upload(placeId);
         upload(placeId);
 
-        // 장소 없는 사진 9장 + 빠지는 장소 사진 2장 = 11장 -> 수정 거부, 장소 · 사진 그대로
+        // 장소 없는 사진 9장 + 빠지는 장소 사진 2장 = 11장 -> 수정 거부, 장소 순서 · 사진 연결 그대로
         List<Map<String, Object>> kept = post.places().stream().skip(1)
                 .map(p -> Map.<String, Object>of("id", p.id(), "name", p.name(), "latitude", 35.1, "longitude", 129.0))
                 .toList();
         UpdatePostRequest request = objectMapper.convertValue(Map.of("places", kept), UpdatePostRequest.class);
         assertThatThrownBy(() -> postService.updatePost(user.getId(), post.id(), request))
                 .isInstanceOf(ImageException.class);
+
+        em.flush();
+        em.clear();
+        assertThat(postPlaceRepository.findByPostIdOrderBySeqAsc(post.id()))
+                .extracting(PostPlace::getId)
+                .containsExactlyElementsOf(post.places().stream().map(p -> p.id()).toList());
+        assertThat(postImageRepository.countByPlaceId(placeId)).isEqualTo(2);
+        assertThat(postImageRepository.countByPostIdAndPlaceIsNull(post.id())).isEqualTo(9);
     }
 
     private void upload(Long placeId) {
