@@ -25,8 +25,8 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class ImageService {
 
-    // 장소 20곳 x 3장 중 일부 + 게시글 사진 - 한 글에 너무 많이 쌓이지 않게 30장으로 제한
-    private static final int MAX_IMAGE_COUNT = 30;
+    // 장소 사진은 장소당 3장(최대 20곳 x 3장), 장소 없이 올리는 게시글 사진은 따로 10장
+    private static final int MAX_POST_IMAGE_COUNT = 10;
     private static final int MAX_PLACE_IMAGE_COUNT = 3;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
 
@@ -44,8 +44,7 @@ public class ImageService {
             throw PostException.unauthorized();
         }
 
-        int currentCount = postImageRepository.countByPostId(postId);
-        if (currentCount >= MAX_IMAGE_COUNT) {
+        if (placeId == null && postImageRepository.countByPostIdAndPlaceIsNull(postId) >= MAX_POST_IMAGE_COUNT) {
             throw ImageException.maxCountExceeded();
         }
 
