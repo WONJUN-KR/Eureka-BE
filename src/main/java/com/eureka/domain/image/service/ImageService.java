@@ -5,6 +5,9 @@ import com.eureka.domain.image.entity.PostImage;
 import com.eureka.domain.image.exception.ImageException;
 import com.eureka.domain.image.repository.PostImageRepository;
 import com.eureka.domain.image.storage.ImageStorage;
+import com.eureka.domain.place.entity.PostPlace;
+import com.eureka.domain.place.exception.PlaceException;
+import com.eureka.domain.place.repository.PostPlaceRepository;
 import com.eureka.domain.post.entity.Post;
 import com.eureka.domain.post.exception.PostException;
 import com.eureka.domain.post.repository.PostRepository;
@@ -22,25 +25,39 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class ImageService {
 
-    private static final int MAX_IMAGE_COUNT = 10;
+    // 장소 사진은 장소당 3장(최대 20곳 x 3장), 장소 없이 올리는 게시글 사진은 따로 10장
+    public static final int MAX_POST_IMAGE_COUNT = 10;
+    private static final int MAX_PLACE_IMAGE_COUNT = 3;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of("jpg", "jpeg", "png", "webp");
 
     private final PostImageRepository postImageRepository;
     private final PostRepository postRepository;
+    private final PostPlaceRepository postPlaceRepository;
     private final ImageStorage imageStorage;
 
     @Transactional
-    public ImageResponse uploadImage(Long userId, Long postId, MultipartFile file) {
-        Post post = postRepository.findById(postId)
+    public ImageResponse uploadImage(Long userId, Long postId, Long placeId, MultipartFile file) {
+        // 장소 수정과 겹치지 않게 게시글 행을 잠그고 진행
+        Post post = postRepository.findByIdWithLock(postId)
                 .orElseThrow(PostException::notFound);
 
         if (!post.isOwner(userId)) {
             throw PostException.unauthorized();
         }
 
-        int currentCount = postImageRepository.countByPostId(postId);
-        if (currentCount >= MAX_IMAGE_COUNT) {
+        if (placeId == null && postImageRepository.countByPostIdAndPlaceIsNull(postId) >= MAX_POST_IMAGE_COUNT) {
             throw ImageException.maxCountExceeded();
+        }
+
+        // 장소 사진이면 그 장소가 이 게시글 것인지, 장소당 장수를 넘지 않는지 확인
+        PostPlace place = null;
+        if (placeId != null) {
+            place = postPlaceRepository.findById(placeId)
+                    .filter(p -> p.getPost().getId().equals(postId))
+                    .orElseThrow(PlaceException::notFound);
+            if (postImageRepository.countByPlaceId(placeId) >= MAX_PLACE_IMAGE_COUNT) {
+                throw PlaceException.maxImageCountExceeded();
+            }
         }
 
         validateFileType(file);
@@ -51,6 +68,7 @@ public class ImageService {
 
         PostImage image = PostImage.builder()
                 .post(post)
+                .place(place)
                 .url(url)
                 .seq(seq)
                 .build();

@@ -37,17 +37,17 @@
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/posts` | 게시글 작성 |
+| POST | `/api/posts` | 게시글 작성 (들른 장소 1~20곳 포함) |
 | GET | `/api/posts` | 게시글 목록 조회 (필터링, 페이징) |
 | GET | `/api/posts/{postId}` | 게시글 상세 조회 |
-| PATCH | `/api/posts/{postId}` | 게시글 수정 |
+| PATCH | `/api/posts/{postId}` | 게시글 수정 (places 를 보내면 장소 목록 통째로 교체) |
 | DELETE | `/api/posts/{postId}` | 게시글 삭제 |
 
 ### Image (이미지)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/posts/{postId}/images` | 게시글 이미지 업로드 (S3) |
+| POST | `/api/posts/{postId}/images` | 게시글 이미지 업로드 (S3, `placeId` 를 주면 장소 사진) |
 | DELETE | `/api/images/{imageId}` | 이미지 삭제 |
 
 ### Like (좋아요)
