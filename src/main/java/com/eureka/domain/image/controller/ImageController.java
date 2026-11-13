@@ -22,13 +22,14 @@ public class ImageController {
 
     private final ImageService imageService;
 
-    @Operation(summary = "게시글 이미지 업로드")
+    @Operation(summary = "게시글 이미지 업로드", description = "placeId 를 주면 그 장소의 사진으로 올라감 (장소당 최대 3장)")
     @PostMapping(value = "/api/posts/{postId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<ImageResponse>> uploadImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long postId,
+            @RequestParam(required = false) Long placeId,
             @RequestParam("file") MultipartFile file) {
-        ImageResponse response = imageService.uploadImage(userDetails.getUserId(), postId, file);
+        ImageResponse response = imageService.uploadImage(userDetails.getUserId(), postId, placeId, file);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

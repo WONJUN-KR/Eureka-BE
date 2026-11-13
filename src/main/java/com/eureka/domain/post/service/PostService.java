@@ -5,6 +5,8 @@ import com.eureka.domain.category.exception.CategoryException;
 import com.eureka.domain.category.repository.SubCategoryRepository;
 import com.eureka.domain.image.entity.PostImage;
 import com.eureka.domain.image.repository.PostImageRepository;
+import com.eureka.domain.place.dto.PlacePoint;
+import com.eureka.domain.place.service.PlaceService;
 import com.eureka.domain.post.dto.*;
 import com.eureka.domain.post.entity.Post;
 import com.eureka.domain.post.exception.PostException;
@@ -35,6 +37,7 @@ public class PostService {
     private final CityRepository cityRepository;
     private final SubCategoryRepository subCategoryRepository;
     private final PostImageRepository postImageRepository;
+    private final PlaceService placeService;
 
     @Transactional
     public PostDetailResponse createPost(Long userId, CreatePostRequest request) {
@@ -48,8 +51,9 @@ public class PostService {
         Post post = request.toEntity(user, city, subCategory);
         post.publish();
         postRepository.save(post);
+        placeService.createPlaces(post, request.getPlaces());
 
-        return PostDetailResponse.from(post);
+        return PostDetailResponse.from(post, placeService.getPlaces(post.getId()));
     }
 
     public Page<PostResponse> getPosts(Long regionId, Long cityId, Long categoryId, Long subCategoryId, Pageable pageable) {
@@ -68,7 +72,7 @@ public class PostService {
         return toResponsePage(postRepository.findByUserIdAndStatus(userId, "PUBLISHED", pageable));
     }
 
-    // 페이지의 게시글 이미지를 한 번에 조회해 게시글별 첫 이미지를 썸네일로 사용
+    // 페이지의 게시글 이미지 · 장소를 한 번에 조회해 게시글별 첫 이미지를 썸네일로 사용
     private Page<PostResponse> toResponsePage(Page<Post> posts) {
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
         Map<Long, String> thumbnails = new HashMap<>();
@@ -77,7 +81,8 @@ public class PostService {
                 thumbnails.putIfAbsent(image.getPost().getId(), image.getUrl());
             }
         }
-        return posts.map(post -> PostResponse.from(post, thumbnails.get(post.getId())));
+        Map<Long, List<PlacePoint>> places = placeService.getPointsByPostIds(postIds);
+        return posts.map(post -> PostResponse.from(post, thumbnails.get(post.getId()), places.getOrDefault(post.getId(), List.of())));
     }
 
     @Transactional
@@ -85,12 +90,13 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(PostException::notFound);
         post.incrementViewCount();
-        return PostDetailResponse.from(post);
+        return PostDetailResponse.from(post, placeService.getPlaces(postId));
     }
 
     @Transactional
     public PostDetailResponse updatePost(Long userId, Long postId, UpdatePostRequest request) {
-        Post post = postRepository.findById(postId)
+        // 사진 업로드와 겹치지 않게 게시글 행을 잠그고 진행
+        Post post = postRepository.findByIdWithLock(postId)
                 .orElseThrow(PostException::notFound);
 
         if (!post.isOwner(userId)) {
@@ -111,8 +117,11 @@ public class PostService {
                 request.getContent() != null ? request.getContent() : post.getContent(),
                 request.getSummary() != null ? request.getSummary() : post.getSummary()
         );
+        if (request.getPlaces() != null) {
+            placeService.replacePlaces(post, request.getPlaces());
+        }
 
-        return PostDetailResponse.from(post);
+        return PostDetailResponse.from(post, placeService.getPlaces(postId));
     }
 
     @Transactional

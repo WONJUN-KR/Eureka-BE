@@ -1,8 +1,10 @@
 package com.eureka.domain.post.dto;
 
+import com.eureka.domain.place.dto.PlaceResponse;
 import com.eureka.domain.post.entity.Post;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record PostDetailResponse(
         Long id,
@@ -16,9 +18,10 @@ public record PostDetailResponse(
         Integer likeCount,
         String status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        List<PlaceResponse> places
 ) {
-    public static PostDetailResponse from(Post post) {
+    public static PostDetailResponse from(Post post, List<PlaceResponse> places) {
         return new PostDetailResponse(
                 post.getId(),
                 post.getTitle(),
@@ -31,7 +34,8 @@ public record PostDetailResponse(
                 post.getLikeCount(),
                 post.getStatus(),
                 post.getCreatedAt(),
-                post.getUpdatedAt()
+                post.getUpdatedAt(),
+                places
         );
     }
 

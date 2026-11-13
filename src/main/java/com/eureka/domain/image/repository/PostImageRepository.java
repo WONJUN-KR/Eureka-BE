@@ -15,7 +15,12 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
     // 목록 썸네일용 - 한 페이지의 게시글 이미지를 한 번에 조회 (게시글마다 따로 조회하지 않게)
     List<PostImage> findByPostIdInOrderBySeqAsc(Collection<Long> postIds);
 
-    int countByPostId(Long postId);
+    int countByPlaceId(Long placeId);
+
+    // 장소 없이 올린 게시글 사진 수
+    int countByPostIdAndPlaceIsNull(Long postId);
+
+    List<PostImage> findByPlaceIdIn(Collection<Long> placeIds);
 
     @Query("SELECT MAX(pi.seq) FROM PostImage pi WHERE pi.post.id = :postId")
     Integer findMaxSeqByPostId(@Param("postId") Long postId);
