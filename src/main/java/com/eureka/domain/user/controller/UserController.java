@@ -63,8 +63,17 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @Operation(summary = "내가 좋아요한 글 목록", description = "공개 글만, 좋아요 누른 순 고정 (sort 파라미터는 무시)")
+    @GetMapping("/me/likes")
+    public ResponseEntity<ApiResponse<Page<PostResponse>>> getMyLikedPosts(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 10) Pageable pageable) {
+        Page<PostResponse> response = postService.getMyLikedPosts(userDetails.getUserId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     // 아래 두 API 는 비로그인 공개 - {userId} 는 숫자만 받아서 /me 와 겹치지 않게 함
-    @Operation(summary = "사용자 프로필 조회", description = "닉네임과 공개한 글 수")
+    @Operation(summary = "사용자 프로필 조회", description = "닉네임 · 공개한 글 수 · 받은 좋아요 수")
     @GetMapping("/{userId:\\d+}")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(@PathVariable Long userId) {
         UserProfileResponse response = userService.getProfile(userId);
