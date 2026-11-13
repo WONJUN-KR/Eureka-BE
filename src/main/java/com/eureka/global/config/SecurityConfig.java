@@ -38,6 +38,8 @@ public class SecurityConfig {
                         ).permitAll()
                         // 게시글 읽기는 비로그인 공개 - 작성 · 수정 · 삭제는 로그인 필요
                         .requestMatchers(HttpMethod.GET, "/api/posts", "/api/posts/{postId}", "/api/posts/{postId}/images").permitAll()
+                        // 다른 사람 프로필 · 글 목록 공개 - 숫자 ID 만 (/api/users/me 는 계속 로그인 필요)
+                        .requestMatchers(HttpMethod.GET, "/api/users/{userId:\\d+}", "/api/users/{userId:\\d+}/posts").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
