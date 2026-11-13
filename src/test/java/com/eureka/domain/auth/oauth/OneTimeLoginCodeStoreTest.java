@@ -1,58 +1,42 @@
 package com.eureka.domain.auth.oauth;
 
-import com.eureka.domain.auth.dto.TokenResponse;
 import org.junit.jupiter.api.Test;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// 1회용 로그인 코드 - 1분이 지나면 교환 안 됨
+// 1회용 로그인 코드 - nonce 가 맞아야 하고, 한 번만, 1분이 지나면 교환 안 됨
 class OneTimeLoginCodeStoreTest {
 
-    private static final TokenResponse TOKENS = TokenResponse.of("access", "refresh");
+    private static final String NONCE = "nonce-aaaaaaaaaaaa";
+
+    @Test
+    void codeIsRedeemedOnceWithTheSameNonce() {
+        OneTimeLoginCodeStore store = new OneTimeLoginCodeStore();
+        String code = store.issue(7L, NONCE);
+
+        assertThat(store.redeem(code, NONCE)).contains(7L);
+        assertThat(store.redeem(code, NONCE)).isEmpty();
+    }
+
+    @Test
+    void wrongNonceBurnsTheCode() {
+        OneTimeLoginCodeStore store = new OneTimeLoginCodeStore();
+        String code = store.issue(7L, NONCE);
+
+        assertThat(store.redeem(code, "other-nonce-bbbbbbbb")).isEmpty();
+        assertThat(store.redeem(code, NONCE)).isEmpty();
+    }
 
     @Test
     void codeExpiresAfterOneMinute() {
-        MutableClock clock = new MutableClock(Instant.parse("2026-11-13T00:00:00Z"));
-        OneTimeLoginCodeStore store = new OneTimeLoginCodeStore(clock);
+        AtomicLong nanos = new AtomicLong();
+        OneTimeLoginCodeStore store = new OneTimeLoginCodeStore(nanos::get);
+        String code = store.issue(7L, NONCE);
 
-        String fresh = store.issue(TOKENS, "nonce-aaaaaaaaaaaa");
-        String stale = store.issue(TOKENS, "nonce-aaaaaaaaaaaa");
+        nanos.addAndGet(OneTimeLoginCodeStore.TTL.toNanos());
 
-        assertThat(store.redeem(fresh, "nonce-aaaaaaaaaaaa")).contains(TOKENS);
-        clock.advance(OneTimeLoginCodeStore.TTL.plusSeconds(1));
-        assertThat(store.redeem(stale, "nonce-aaaaaaaaaaaa")).isEmpty();
-    }
-
-    private static final class MutableClock extends Clock {
-        private Instant now;
-
-        MutableClock(Instant now) {
-            this.now = now;
-        }
-
-        void advance(Duration duration) {
-            now = now.plus(duration);
-        }
-
-        @Override
-        public Instant instant() {
-            return now;
-        }
-
-        @Override
-        public ZoneOffset getZone() {
-            return ZoneOffset.UTC;
-        }
-
-        @Override
-        public Clock withZone(ZoneId zone) {
-            return this;
-        }
+        assertThat(store.redeem(code, NONCE)).isEmpty();
     }
 }

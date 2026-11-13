@@ -4,6 +4,7 @@ import com.eureka.domain.auth.dto.TokenResponse;
 import com.eureka.domain.auth.oauth.KakaoUser;
 import com.eureka.domain.user.entity.AuthProvider;
 import com.eureka.domain.user.entity.User;
+import com.eureka.domain.user.exception.UserException;
 import com.eureka.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,12 +27,19 @@ public class KakaoLoginService {
     private final AuthService authService;
     private final SecureRandom random = new SecureRandom();
 
-    // 카카오에서 받은 회원으로 로그인 - 처음이면 가입시킨 뒤 토큰 발급
+    // 카카오에서 받은 회원을 찾고, 처음이면 가입 - 회원 id 만 돌려줌
     // 카카오 호출은 컨트롤러에서 먼저 끝내서, 여기 트랜잭션은 DB 작업만 붙잡음
     @Transactional
-    public TokenResponse login(KakaoUser kakaoUser) {
-        User user = userRepository.findByProviderAndProviderId(AuthProvider.KAKAO, kakaoUser.id())
-                .orElseGet(() -> signup(kakaoUser));
+    public Long findOrSignup(KakaoUser kakaoUser) {
+        return userRepository.findByProviderAndProviderId(AuthProvider.KAKAO, kakaoUser.id())
+                .orElseGet(() -> signup(kakaoUser))
+                .getId();
+    }
+
+    // 1회용 코드 교환에 성공했을 때만 토큰 발급 - 교환이 안 되면 기존 refresh token 을 덮어쓰지 않음
+    @Transactional
+    public TokenResponse issueTokens(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(UserException::notFound);
         return authService.issueTokens(user);
     }
 

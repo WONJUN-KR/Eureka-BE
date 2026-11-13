@@ -137,12 +137,18 @@ if (!post.getUser().getId().equals(currentUserId)) {
 2. 백엔드가 `state.nonce` 를 `kakao_oauth_state` 쿠키(HttpOnly, 5분)에 두고 카카오 로그인 화면으로 302 (nonce 가 없거나 형식이 틀리면 바로 프론트로 `#error`)
 3. 카카오가 `GET /login/oauth2/code/kakao?code=...&state=...` 로 돌려보냄 (카카오 콘솔에 등록한 리다이렉트 URI)
 4. state 가 쿠키와 같으면 인가 코드로 카카오 회원번호 · 닉네임을 받아오고, 처음이면 가입, 이미 있으면 그 계정
-5. 토큰을 1회용 코드(1분, 한 번만, 쿠키의 nonce 에 묶임)에 넣고 `oauth.kakao.frontend-redirect-uri` 로 302
+5. 회원 id 를 1회용 코드(1분, 한 번만, 쿠키의 nonce 에 묶임)에 넣고 `oauth.kakao.frontend-redirect-uri` 로 302 - 토큰은 아직 발급하지 않음(교환이 안 되면 기존 로그인의 refresh token 이 그대로 남게)
    - 성공: `#code=...`
    - 실패(state 다름 · 카카오 오류 · 그 밖의 오류): `#error=kakao_login_failed`
-6. 프론트가 `POST /api/auth/kakao/exchange` `{"code": "...", "nonce": "그 탭의 nonce"}` 로 토큰을 받음
+6. 프론트가 `POST /api/auth/kakao/exchange` `{"code": "...", "nonce": "그 탭의 nonce"}` 로 토큰을 받음 - 이때 토큰 발급
    - 성공 200: `{"data": {"accessToken": "...", "refreshToken": "..."}}`
-   - 코드가 없거나 · 만료 · 이미 씀 · nonce 다름: 401 (A004). 코드는 nonce 가 틀려도 한 번 꺼내면 사라짐
+   - code · nonce 가 비어 있음: 400
+   - 코드가 없음 · 만료 · 이미 씀 · nonce 다름: 401 (A004). 코드는 nonce 가 틀려도 한 번 꺼내면 사라지므로 프론트는 교환을 한 번만 보냄
+
+알아둘 것
+
+- nonce 는 로그인을 시작한 브라우저에 있어야 함. 프론트는 sessionStorage 대신 localStorage 에 두면 카카오톡 앱 로그인 뒤 같은 브라우저의 새 탭으로 돌아와도 교환됨. 다른 브라우저(카카오톡 안 브라우저 → 기본 브라우저 등)로 돌아오면 교환되지 않음
+- state 쿠키는 하나라서 두 탭에서 동시에 로그인을 시작하면 먼저 시작한 탭은 실패함(다시 누르면 됨)
 
 코드는 서버 메모리에 둡니다(서버 한 대 기준). 서버를 여러 대로 늘리면 Redis 같은 공용 저장소로 옮겨야 합니다.
 

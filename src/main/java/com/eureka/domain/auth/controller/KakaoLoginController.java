@@ -56,7 +56,8 @@ public class KakaoLoginController {
     @GetMapping("/api/auth/kakao")
     public ResponseEntity<Void> start(@RequestParam(required = false) String nonce) {
         if (nonce == null || !NONCE.matcher(nonce).matches()) {
-            return redirectToFront(ERROR_FRAGMENT, null);
+            // 이전 시도에서 남은 state 쿠키도 같이 지움
+            return redirectToFront(ERROR_FRAGMENT, stateCookie("", Duration.ZERO));
         }
         // 다른 사이트가 만든 카카오 응답을 막기 위해 state 를, 교환 때 쓰려고 nonce 를 쿠키에 두고 돌아올 때 꺼냄
         String state = UUID.randomUUID().toString();
@@ -78,8 +79,8 @@ public class KakaoLoginController {
         if (code != null && state != null && parts.length == 2 && state.equals(parts[0])) {
             try {
                 KakaoUser kakaoUser = kakaoOAuthClient.fetchUser(code);
-                TokenResponse tokens = kakaoLoginService.login(kakaoUser);
-                fragment = "code=" + loginCodeStore.issue(tokens, parts[1]);
+                Long userId = kakaoLoginService.findOrSignup(kakaoUser);
+                fragment = "code=" + loginCodeStore.issue(userId, parts[1]);
             } catch (RuntimeException e) {
                 // 카카오 오류 · 가입 충돌 등 어떤 실패든 브라우저는 프론트로 돌려보냄
                 log.warn("카카오 로그인 실패: {}", e.toString());
@@ -91,9 +92,9 @@ public class KakaoLoginController {
     @Operation(summary = "카카오 로그인 코드 교환", description = "콜백에서 받은 1회용 코드와 로그인을 시작한 탭의 nonce 로 토큰 발급. 코드는 1분 안에 한 번만")
     @PostMapping("/api/auth/kakao/exchange")
     public ResponseEntity<ApiResponse<TokenResponse>> exchange(@Valid @RequestBody KakaoExchangeRequest request) {
-        TokenResponse tokens = loginCodeStore.redeem(request.code(), request.nonce())
+        Long userId = loginCodeStore.redeem(request.code(), request.nonce())
                 .orElseThrow(AuthException::invalidToken);
-        return ResponseEntity.ok(ApiResponse.success(tokens));
+        return ResponseEntity.ok(ApiResponse.success(kakaoLoginService.issueTokens(userId)));
     }
 
     // 코드 · 오류는 서버 로그 · Referer 에 남지 않게 # 뒤에 붙임

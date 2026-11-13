@@ -3,6 +3,7 @@ package com.eureka.domain.auth;
 import com.eureka.domain.auth.exception.AuthException;
 import com.eureka.domain.auth.oauth.KakaoOAuthClient;
 import com.eureka.domain.auth.oauth.KakaoUser;
+import com.eureka.domain.auth.repository.RefreshTokenRepository;
 import com.eureka.domain.user.entity.AuthProvider;
 import com.eureka.domain.user.entity.User;
 import com.eureka.domain.user.repository.UserRepository;
@@ -44,6 +45,7 @@ class KakaoLoginTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private UserRepository userRepository;
+    @Autowired private RefreshTokenRepository refreshTokenRepository;
     @MockitoBean private KakaoOAuthClient kakaoOAuthClient;
 
     @BeforeEach
@@ -115,6 +117,24 @@ class KakaoLoginTest {
                 .andExpect(jsonPath("$.data.accessToken", notNullValue()))
                 .andExpect(jsonPath("$.data.refreshToken", notNullValue()));
         exchange(code, NONCE).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void tokensAreIssuedOnlyWhenExchanged() throws Exception {
+        // 교환 전에는 refresh token 을 만들지 않아서, 교환이 안 되면 다른 기기의 로그인이 그대로 유지됨
+        given(kakaoOAuthClient.fetchUser("code-1")).willReturn(new KakaoUser("12345", "바다여행"));
+        String code = loginCode("code-1");
+        Long userId = userRepository.findByProviderAndProviderId(AuthProvider.KAKAO, "12345").orElseThrow().getId();
+        assertThat(refreshTokenRepository.findByUserId(userId)).isEmpty();
+
+        exchange(code, NONCE).andExpect(status().isOk());
+        assertThat(refreshTokenRepository.findByUserId(userId)).isPresent();
+    }
+
+    @Test
+    void blankCodeOrNonceIsBadRequest() throws Exception {
+        exchange("", NONCE).andExpect(status().isBadRequest());
+        exchange("code", "").andExpect(status().isBadRequest());
     }
 
     @Test
