@@ -262,9 +262,11 @@ public enum UserRole {
 | id | Long (PK) | |
 | post_id | Long (FK → posts) | 게시글 |
 | user_id | Long (FK → users) | 신고자 |
-| reason | String | 신고 사유 |
+| reason | Enum | 신고 사유 (FALSE_INFO, INAPPROPRIATE, SPAM, COPYRIGHT, ETC) |
 | status | String | 공통코드 (PENDING, RESOLVED, REJECTED) |
 | created_at | LocalDateTime | |
+
+- UNIQUE(post_id, user_id)
 
 ---
 

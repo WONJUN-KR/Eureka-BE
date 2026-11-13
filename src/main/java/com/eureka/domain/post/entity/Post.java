@@ -6,12 +6,15 @@ import com.eureka.domain.user.entity.User;
 import com.eureka.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "posts")
+// 바뀐 칸만 UPDATE - 조회수 저장이 그사이 신고로 바뀐 status(HIDDEN)를 덮어쓰지 않게
+@DynamicUpdate
 @SQLRestriction("deleted_at IS NULL")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
