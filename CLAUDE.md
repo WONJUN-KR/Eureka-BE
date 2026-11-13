@@ -40,6 +40,8 @@ com.eureka
 - PR 대상: `dev`
 - **커밋 시 반드시 메시지만 텍스트로 먼저 보여주고, 사용자가 커밋을 요청하면 실행할 것** (공동 커밋 방지)
 - **Co-Authored-By 넣지 말 것**
+- **PR 전**: `docs/review-rules.md` 체크리스트 확인 + 로컬 서버로 바뀐 엔드포인트를 실제로 호출
+- **머지**: 머지 커밋(`gh pr merge --merge`), 스쿼시 X
 - **PR 머지 후**: `dev`로 체크아웃 → `git pull` → 로컬 feature 브랜치 삭제
 
 ## 개발 가이드
