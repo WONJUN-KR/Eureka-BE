@@ -4,6 +4,7 @@ import com.eureka.domain.auth.exception.AuthException;
 import com.eureka.domain.auth.oauth.KakaoOAuthClient;
 import com.eureka.domain.auth.oauth.KakaoUser;
 import com.eureka.domain.auth.repository.RefreshTokenRepository;
+import com.eureka.domain.auth.service.KakaoLoginService;
 import com.eureka.domain.user.entity.AuthProvider;
 import com.eureka.domain.user.entity.User;
 import com.eureka.domain.user.repository.UserRepository;
@@ -13,8 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
@@ -23,9 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.startsWith;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,6 +54,7 @@ class KakaoLoginTest {
     @Autowired private UserRepository userRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
     @MockitoBean private KakaoOAuthClient kakaoOAuthClient;
+    @MockitoSpyBean private KakaoLoginService kakaoLoginService;
 
     @BeforeEach
     void setUp() {
@@ -208,6 +216,27 @@ class KakaoLoginTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"kakao_999@kakao.eureka.local\",\"password\":\"password1\",\"nickname\":\"선점\",\"name\":\"테스트\"}"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void signupConflictIsRetried() throws Exception {
+        // 동시에 첫 로그인한 쪽이 먼저 저장해 유니크 제약에 걸려도, 다시 시도해서 로그인됨
+        given(kakaoOAuthClient.fetchUser("code-6")).willReturn(new KakaoUser("666", "동시가입"));
+        doThrow(new DataIntegrityViolationException("unique")).doCallRealMethod()
+                .when(kakaoLoginService).findOrSignup(any());
+
+        loginCode("code-6");
+
+        assertThat(userRepository.findByProviderAndProviderId(AuthProvider.KAKAO, "666")).isPresent();
+    }
+
+    @Test
+    void repeatedSignupConflictGoesBackWithError() throws Exception {
+        given(kakaoOAuthClient.fetchUser("code-7")).willReturn(new KakaoUser("777", "계속충돌"));
+        doThrow(new DataIntegrityViolationException("unique")).when(kakaoLoginService).findOrSignup(any());
+
+        assertThat(callback("code-7", "s", "s." + NONCE)).isEqualTo(ERROR);
+        verify(kakaoLoginService, times(3)).findOrSignup(any());
     }
 
     @Test
