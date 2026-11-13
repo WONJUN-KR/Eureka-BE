@@ -28,7 +28,9 @@ public class UserService {
     public UserProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserException::notFound);
-        return UserProfileResponse.from(user, postRepository.countByUserIdAndStatus(userId, "PUBLISHED"));
+        return UserProfileResponse.from(user,
+                postRepository.countByUserIdAndStatus(userId, "PUBLISHED"),
+                postRepository.sumLikeCountByUserId(userId));
     }
 
     @Transactional
