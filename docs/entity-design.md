@@ -37,7 +37,11 @@
 | role | Enum | USER, ADMIN |
 | status | String | 공통코드 (ACTIVE, INACTIVE, BANNED) |
 | deleted_at | LocalDateTime | soft delete |
+| provider | Enum | 가입 경로 LOCAL, KAKAO (기본 LOCAL) |
+| provider_id | String(64) | 카카오 회원번호 (LOCAL 은 null) |
 | created_at, updated_at | LocalDateTime | BaseEntity |
+
+- UNIQUE(provider, provider_id)
 
 ---
 
