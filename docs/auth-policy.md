@@ -41,6 +41,7 @@
 | POST | /api/auth/reissue | 토큰 재발급 |
 | GET | /api/auth/kakao | 카카오 로그인 시작 (302) |
 | GET | /login/oauth2/code/kakao | 카카오 로그인 콜백 (302) |
+| POST | /api/auth/kakao/exchange | 카카오 로그인 코드 교환 |
 | GET | /api/posts | 게시글 목록 |
 | GET | /api/posts/{id} | 게시글 상세 |
 | GET | /api/regions | 지역 목록 |
@@ -130,18 +131,20 @@ if (!post.getUser().getId().equals(currentUserId)) {
 
 ## 카카오 로그인
 
-브라우저가 이동하는 흐름이라 JSON 대신 302 로 응답합니다.
+브라우저가 이동하는 흐름이라 시작 · 콜백은 302 로 응답합니다. 토큰은 주소에 싣지 않고, 1회용 코드를 로그인을 시작한 탭에서만 교환할 수 있게 해서 로그인 CSRF(남이 만든 콜백 링크로 그 사람 계정에 로그인되는 것)를 막습니다.
 
-1. 프론트가 브라우저를 `GET /api/auth/kakao` 로 보냄
-2. 백엔드가 state 를 `kakao_oauth_state` 쿠키(HttpOnly, 5분)에 두고 카카오 로그인 화면으로 302
+1. 프론트가 탭마다 nonce(16~128자 `[A-Za-z0-9_-]`)를 만들어 sessionStorage 에 두고 브라우저를 `GET /api/auth/kakao?nonce=...` 로 보냄
+2. 백엔드가 `state.nonce` 를 `kakao_oauth_state` 쿠키(HttpOnly, 5분)에 두고 카카오 로그인 화면으로 302 (nonce 가 없거나 형식이 틀리면 바로 프론트로 `#error`)
 3. 카카오가 `GET /login/oauth2/code/kakao?code=...&state=...` 로 돌려보냄 (카카오 콘솔에 등록한 리다이렉트 URI)
-4. state 가 쿠키와 같으면 인가 코드로 카카오 회원번호 · 닉네임을 받아옴
-5. 처음이면 가입, 이미 있으면 그 계정으로 토큰 발급
-6. `oauth.kakao.frontend-redirect-uri` 로 302
-   - 성공: `#accessToken=...&refreshToken=...`
-   - 실패(state 다름 · 카카오 오류): `#error=kakao_login_failed`
+4. state 가 쿠키와 같으면 인가 코드로 카카오 회원번호 · 닉네임을 받아오고, 처음이면 가입, 이미 있으면 그 계정
+5. 토큰을 1회용 코드(1분, 한 번만, 쿠키의 nonce 에 묶임)에 넣고 `oauth.kakao.frontend-redirect-uri` 로 302
+   - 성공: `#code=...`
+   - 실패(state 다름 · 카카오 오류 · 그 밖의 오류): `#error=kakao_login_failed`
+6. 프론트가 `POST /api/auth/kakao/exchange` `{"code": "...", "nonce": "그 탭의 nonce"}` 로 토큰을 받음
+   - 성공 200: `{"data": {"accessToken": "...", "refreshToken": "..."}}`
+   - 코드가 없거나 · 만료 · 이미 씀 · nonce 다름: 401 (A004). 코드는 nonce 가 틀려도 한 번 꺼내면 사라짐
 
-토큰은 서버 로그 · Referer 에 남지 않게 `#` 뒤에 붙입니다. 프론트는 콜백 화면에서 읽어 저장한 뒤 주소에서 지웁니다.
+코드는 서버 메모리에 둡니다(서버 한 대 기준). 서버를 여러 대로 늘리면 Redis 같은 공용 저장소로 옮겨야 합니다.
 
 ### 카카오로 가입한 계정
 
