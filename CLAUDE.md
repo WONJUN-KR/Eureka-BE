@@ -54,6 +54,7 @@ com.eureka
 | 비즈니스 로직 | `docs/business-rules.md` |
 | 설계 확인 | `docs/decisions.md`, `docs/flow.md` |
 | 코딩 패턴 | `docs/coding-patterns.md` |
+| 모든 작업 · PR 전 | `docs/review-rules.md` (리뷰에서 반복된 지적 + 체크리스트) |
 
 ## 문서 목록
 
@@ -67,6 +68,7 @@ com.eureka
 | `docs/flow.md` | 화면/서비스 플로우 |
 | `docs/decisions.md` | 설계 결정 사항 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
+| `docs/review-rules.md` | 리뷰 규칙 · PR 전 체크리스트 |
 
 ## 프로젝트 배경
 
