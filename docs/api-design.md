@@ -40,7 +40,7 @@
 |--------|----------|-------------|
 | POST | `/api/posts` | 게시글 작성 (들른 장소 1~20곳 포함) |
 | GET | `/api/posts` | 게시글 목록 조회 (필터링, 페이징, `keyword` 로 제목 · 내용 · 장소 이름 검색) |
-| GET | `/api/posts/{postId}` | 게시글 상세 조회 |
+| GET | `/api/posts/{postId}` | 게시글 상세 조회 (임시 · 숨김 글은 글쓴이만, 다른 사람에게는 404) |
 | PATCH | `/api/posts/{postId}` | 게시글 수정 (places 를 보내면 장소 목록 통째로 교체) |
 | DELETE | `/api/posts/{postId}` | 게시글 삭제 |
 
@@ -57,6 +57,12 @@
 |--------|----------|-------------|
 | POST | `/api/posts/{postId}/like` | 좋아요 토글 |
 | GET | `/api/posts/{postId}/like` | 좋아요 상태 조회 |
+
+### Report (신고)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/posts/{postId}/reports` | 게시글 신고 (`{"reason": "SPAM"}`, 한 사람당 한 번, 본인 글 불가) |
 
 ### Region (지역)
 
