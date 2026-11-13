@@ -22,12 +22,17 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "AND (:regionId IS NULL OR p.city.region.id = :regionId) " +
             "AND (:cityId IS NULL OR p.city.id = :cityId) " +
             "AND (:categoryId IS NULL OR p.subCategory.category.id = :categoryId) " +
-            "AND (:subCategoryId IS NULL OR p.subCategory.id = :subCategoryId)")
+            "AND (:subCategoryId IS NULL OR p.subCategory.id = :subCategoryId) " +
+            "AND (:keyword IS NULL " +
+            "  OR LOWER(p.title) LIKE :keyword ESCAPE '\\' " +
+            "  OR LOWER(p.content) LIKE :keyword ESCAPE '\\' " +
+            "  OR EXISTS (SELECT 1 FROM PostPlace pp WHERE pp.post = p AND LOWER(pp.name) LIKE :keyword ESCAPE '\\'))")
     Page<Post> findAllWithFilters(
             @Param("regionId") Long regionId,
             @Param("cityId") Long cityId,
             @Param("categoryId") Long categoryId,
             @Param("subCategoryId") Long subCategoryId,
+            @Param("keyword") String keyword,
             Pageable pageable
     );
 

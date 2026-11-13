@@ -40,8 +40,9 @@ public class PostController {
             @RequestParam(required = false) Long cityId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long subCategoryId,
+            @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<PostResponse> response = postService.getPosts(regionId, cityId, categoryId, subCategoryId, pageable);
+        Page<PostResponse> response = postService.getPosts(regionId, cityId, categoryId, subCategoryId, keyword, pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
