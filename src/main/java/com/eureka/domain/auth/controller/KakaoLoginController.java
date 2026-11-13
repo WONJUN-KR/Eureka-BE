@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -46,6 +47,7 @@ public class KakaoLoginController {
     private static final String CALLBACK_PATH = "/login/oauth2/code/kakao";
     private static final Pattern NONCE = Pattern.compile("[A-Za-z0-9_-]{16,128}");
     private static final String ERROR_FRAGMENT = "error=kakao_login_failed";
+    private static final int SIGNUP_ATTEMPTS = 3;
 
     private final KakaoOAuthClient kakaoOAuthClient;
     private final KakaoLoginService kakaoLoginService;
@@ -79,7 +81,7 @@ public class KakaoLoginController {
         if (code != null && state != null && parts.length == 2 && state.equals(parts[0])) {
             try {
                 KakaoUser kakaoUser = kakaoOAuthClient.fetchUser(code);
-                Long userId = kakaoLoginService.findOrSignup(kakaoUser);
+                Long userId = findOrSignup(kakaoUser);
                 fragment = "code=" + loginCodeStore.issue(userId, parts[1]);
             } catch (RuntimeException e) {
                 // 카카오 오류 · 가입 충돌 등 어떤 실패든 브라우저는 프론트로 돌려보냄
@@ -95,6 +97,20 @@ public class KakaoLoginController {
         Long userId = loginCodeStore.redeem(request.code(), request.nonce())
                 .orElseThrow(AuthException::invalidToken);
         return ResponseEntity.ok(ApiResponse.success(kakaoLoginService.issueTokens(userId)));
+    }
+
+    // 같은 카카오 계정 · 같은 닉네임으로 동시에 첫 로그인하면 유니크 제약에 걸릴 수 있음
+    // 실패한 트랜잭션이 끝난 뒤 새 트랜잭션에서 다시 찾거나 다른 닉네임을 고르고, 계속 걸리면 그대로 던짐
+    private Long findOrSignup(KakaoUser kakaoUser) {
+        for (int attempt = 1; ; attempt++) {
+            try {
+                return kakaoLoginService.findOrSignup(kakaoUser);
+            } catch (DataIntegrityViolationException e) {
+                if (attempt == SIGNUP_ATTEMPTS) {
+                    throw e;
+                }
+            }
+        }
     }
 
     // 코드 · 오류는 서버 로그 · Referer 에 남지 않게 # 뒤에 붙임
