@@ -48,8 +48,11 @@ public class PostController {
 
     @Operation(summary = "게시글 상세 조회")
     @GetMapping("/{postId}")
-    public ResponseEntity<ApiResponse<PostDetailResponse>> getPost(@PathVariable Long postId) {
-        PostDetailResponse response = postService.getPost(postId);
+    public ResponseEntity<ApiResponse<PostDetailResponse>> getPost(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long postId) {
+        Long viewerId = userDetails != null ? userDetails.getUserId() : null;
+        PostDetailResponse response = postService.getPost(postId, viewerId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

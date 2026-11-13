@@ -107,9 +107,11 @@ public class PostService {
         return posts.map(post -> PostResponse.from(post, thumbnails.get(post.getId()), places.getOrDefault(post.getId(), List.of())));
     }
 
+    // 공개 글은 누구나, 임시 · 숨김(신고 누적) 글은 글쓴이만 볼 수 있음 - viewerId 는 비로그인이면 null
     @Transactional
-    public PostDetailResponse getPost(Long postId) {
+    public PostDetailResponse getPost(Long postId, Long viewerId) {
         Post post = postRepository.findById(postId)
+                .filter(p -> p.isPublished() || (viewerId != null && p.isOwner(viewerId)))
                 .orElseThrow(PostException::notFound);
         post.incrementViewCount();
         return PostDetailResponse.from(post, placeService.getPlaces(postId));

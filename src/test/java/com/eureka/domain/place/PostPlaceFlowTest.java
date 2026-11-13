@@ -115,7 +115,7 @@ class PostPlaceFlowTest {
         em.flush();
         em.clear();
 
-        List<PlaceResponse> places = postService.getPost(postId).places();
+        List<PlaceResponse> places = postService.getPost(postId, user.getId()).places();
         assertThat(places).extracting(PlaceResponse::name).containsExactly("C", "D");
         assertThat(places).extracting(PlaceResponse::seq).containsExactly(1, 2);
         assertThat(places.get(0).id()).isEqualTo(idC);
