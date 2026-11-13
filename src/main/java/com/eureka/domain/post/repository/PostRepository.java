@@ -41,4 +41,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findByUserIdAndStatus(Long userId, String status, Pageable pageable);
 
     long countByUserIdAndStatus(Long userId, String status);
+
+    // 사용자가 받은 좋아요 수 - 공개 글의 좋아요 합
+    @Query("SELECT COALESCE(SUM(p.likeCount), 0) FROM Post p WHERE p.user.id = :userId AND p.status = 'PUBLISHED'")
+    long sumLikeCountByUserId(@Param("userId") Long userId);
 }

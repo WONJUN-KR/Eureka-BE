@@ -5,6 +5,7 @@ import com.eureka.domain.category.exception.CategoryException;
 import com.eureka.domain.category.repository.SubCategoryRepository;
 import com.eureka.domain.image.entity.PostImage;
 import com.eureka.domain.image.repository.PostImageRepository;
+import com.eureka.domain.like.repository.PostLikeRepository;
 import com.eureka.domain.place.dto.PlacePoint;
 import com.eureka.domain.place.service.PlaceService;
 import com.eureka.domain.post.dto.*;
@@ -19,6 +20,7 @@ import com.eureka.domain.user.exception.UserException;
 import com.eureka.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,7 @@ public class PostService {
     private final CityRepository cityRepository;
     private final SubCategoryRepository subCategoryRepository;
     private final PostImageRepository postImageRepository;
+    private final PostLikeRepository postLikeRepository;
     private final PlaceService placeService;
 
     @Transactional
@@ -75,6 +78,12 @@ public class PostService {
 
     public Page<PostResponse> getMyPosts(Long userId, Pageable pageable) {
         return toResponsePage(postRepository.findByUserId(userId, pageable));
+    }
+
+    // 내가 좋아요한 글 - 공개 글만, 좋아요 누른 순으로 고정 (sort 파라미터는 무시)
+    public Page<PostResponse> getMyLikedPosts(Long userId, Pageable pageable) {
+        Pageable unsorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        return toResponsePage(postLikeRepository.findLikedPosts(userId, unsorted));
     }
 
     // 다른 사람이 보는 사용자 글 목록 - 공개된 글만
