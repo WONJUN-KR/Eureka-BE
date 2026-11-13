@@ -12,7 +12,7 @@ com.eureka
 │   ├── exception/
 │   └── util/
 └── domain/
-    ├── auth/             # v1: JWT 인증 / v5: OAuth
+    ├── auth/             # v1: JWT 인증 / 카카오 로그인
     ├── user/             # v1: 회원
     ├── post/             # v1: 게시글 + 정렬
     ├── region/           # v1: 지역
@@ -54,7 +54,7 @@ domain/{도메인명}/
 | **v2** | 인프라/품질 (Docker, CI/CD, 테스트, 배포 환경) |
 | **v3** | 부가 기능 (comment, bookmark, report, search) |
 | **v4** | 소셜 기능 (follow, notification, tag, 대댓글) |
-| **v5** | OAuth, admin |
+| **v5** | admin (카카오 로그인은 먼저 구현) |
 
 ## 기술 스택
 

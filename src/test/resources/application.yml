@@ -26,3 +26,10 @@ cloud:
       static: ap-northeast-2
     s3:
       bucket: test-bucket
+
+oauth:
+  kakao:
+    client-id: test-client-id
+    client-secret: test-client-secret
+    redirect-uri: http://localhost:8095/login/oauth2/code/kakao
+    frontend-redirect-uri: http://localhost:3000/auth/kakao/callback

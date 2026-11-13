@@ -24,4 +24,8 @@ public class AuthException extends BusinessException {
     public static AuthException invalidToken() {
         return new AuthException(AuthErrorCode.INVALID_TOKEN);
     }
+
+    public static AuthException kakaoLoginFailed() {
+        return new AuthException(AuthErrorCode.KAKAO_LOGIN_FAILED);
+    }
 }

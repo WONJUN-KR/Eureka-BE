@@ -21,6 +21,8 @@
 | POST | `/api/auth/signup` | 회원가입 |
 | POST | `/api/auth/login` | 로그인 (JWT 발급) |
 | POST | `/api/auth/reissue` | 토큰 재발급 |
+| GET | `/api/auth/kakao` | 카카오 로그인 시작 - 카카오 로그인 화면으로 302 (흐름은 auth-policy) |
+| GET | `/login/oauth2/code/kakao` | 카카오 로그인 콜백 - 프론트 주소로 302 |
 
 ### User (사용자)
 
