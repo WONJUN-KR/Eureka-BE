@@ -39,6 +39,9 @@
 | POST | /api/auth/signup | 회원가입 |
 | POST | /api/auth/login | 로그인 |
 | POST | /api/auth/reissue | 토큰 재발급 |
+| GET | /api/auth/kakao | 카카오 로그인 시작 (302) |
+| GET | /login/oauth2/code/kakao | 카카오 로그인 콜백 (302) |
+| POST | /api/auth/kakao/exchange | 카카오 로그인 코드 교환 |
 | GET | /api/posts | 게시글 목록 |
 | GET | /api/posts/{id} | 게시글 상세 |
 | GET | /api/regions | 지역 목록 |
@@ -122,4 +125,52 @@ if (!post.getUser().getId().equals(currentUserId)) {
     "refreshToken": "새 리프레시 토큰"
   }
 }
+```
+
+---
+
+## 카카오 로그인
+
+브라우저가 이동하는 흐름이라 시작 · 콜백은 302 로 응답합니다. 토큰은 주소에 싣지 않고, 1회용 코드를 로그인을 시작한 탭에서만 교환할 수 있게 해서 로그인 CSRF(남이 만든 콜백 링크로 그 사람 계정에 로그인되는 것)를 막습니다.
+
+1. 프론트가 탭마다 nonce(16~128자 `[A-Za-z0-9_-]`)를 만들어 sessionStorage 에 두고 브라우저를 `GET /api/auth/kakao?nonce=...` 로 보냄
+2. 백엔드가 `state.nonce` 를 `kakao_oauth_state` 쿠키(HttpOnly, 5분)에 두고 카카오 로그인 화면으로 302 (nonce 가 없거나 형식이 틀리면 바로 프론트로 `#error`)
+3. 카카오가 `GET /login/oauth2/code/kakao?code=...&state=...` 로 돌려보냄 (카카오 콘솔에 등록한 리다이렉트 URI)
+4. state 가 쿠키와 같으면 인가 코드로 카카오 회원번호 · 닉네임을 받아오고, 처음이면 가입, 이미 있으면 그 계정
+5. 회원 id 를 1회용 코드(1분, 한 번만, 쿠키의 nonce 에 묶임)에 넣고 `oauth.kakao.frontend-redirect-uri` 로 302 - 토큰은 아직 발급하지 않음(교환이 안 되면 기존 로그인의 refresh token 이 그대로 남게)
+   - 성공: `#code=...`
+   - 실패(state 다름 · 카카오 오류 · 그 밖의 오류): `#error=kakao_login_failed`
+6. 프론트가 `POST /api/auth/kakao/exchange` `{"code": "...", "nonce": "그 탭의 nonce"}` 로 토큰을 받음 - 이때 토큰 발급
+   - 성공 200: `{"data": {"accessToken": "...", "refreshToken": "..."}}`
+   - code · nonce 가 비어 있음: 400
+   - 코드가 없음 · 만료 · 이미 씀 · nonce 다름: 401 (A004). 코드는 nonce 가 틀려도 한 번 꺼내면 사라지므로 프론트는 교환을 한 번만 보냄
+
+알아둘 것
+
+- nonce 는 로그인을 시작한 브라우저에 있어야 함. 프론트는 sessionStorage 대신 localStorage 에 두면 카카오톡 앱 로그인 뒤 같은 브라우저의 새 탭으로 돌아와도 교환됨. 다른 브라우저(카카오톡 안 브라우저 → 기본 브라우저 등)로 돌아오면 교환되지 않음
+- 같은 카카오 계정이나 같은 닉네임으로 동시에 첫 로그인해서 유니크 제약에 걸리면 새 트랜잭션에서 최대 3번까지 다시 시도함(다시 찾거나 다른 닉네임을 고름)
+- state 쿠키는 하나라서 두 탭에서 동시에 로그인을 시작하면 먼저 시작한 탭은 실패함(다시 누르면 됨)
+
+코드는 서버 메모리에 둡니다(서버 한 대 기준). 서버를 여러 대로 늘리면 Redis 같은 공용 저장소로 옮겨야 합니다.
+
+### 카카오로 가입한 계정
+
+| 필드 | 값 |
+|------|----|
+| provider / provider_id | KAKAO / 카카오 회원번호 |
+| email | `kakao_{회원번호}@kakao.eureka.local` (내부용, 이메일 로그인 불가) |
+| password | 아무도 모르는 무작위 값 (비밀번호 로그인 불가) |
+| nickname | 카카오 닉네임(최대 16자) - 겹치면 뒤에 숫자 4자리, 없으면 '여행자' |
+
+카카오에서는 닉네임만 선택 동의로 받습니다. 이메일은 받지 않습니다.
+
+### 설정 (application-local.yml, gitignore)
+
+```yaml
+oauth:
+  kakao:
+    client-id: 카카오 REST API 키
+    client-secret: 카카오 클라이언트 시크릿
+    redirect-uri: http://localhost:8095/login/oauth2/code/kakao
+    frontend-redirect-uri: http://localhost:3000/auth/kakao/callback
 ```

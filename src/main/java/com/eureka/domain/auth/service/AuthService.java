@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +30,9 @@ public class AuthService {
 
     @Transactional
     public void signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
+        // 카카오 계정용 내부 이메일은 미리 가로챌 수 없게 막음
+        if (request.email().toLowerCase(Locale.ROOT).endsWith(User.KAKAO_EMAIL_DOMAIN)
+                || userRepository.existsByEmail(request.email())) {
             throw UserException.duplicateEmail();
         }
         if (userRepository.existsByNickname(request.nickname())) {
@@ -50,6 +53,12 @@ public class AuthService {
             throw UserException.passwordMismatch();
         }
 
+        return issueTokens(user);
+    }
+
+    // 로그인 성공 후 토큰 발급 - 이메일 로그인 · 카카오 로그인 공용
+    @Transactional
+    public TokenResponse issueTokens(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
 
