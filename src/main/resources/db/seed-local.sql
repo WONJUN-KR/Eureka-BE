@@ -99,7 +99,7 @@ INSERT INTO sub_categories (category_id, name, created_at, updated_at) VALUES
   (3, '펫페어', now(), now());
 
 INSERT INTO users (email, password, nickname, name, email_verified, role, status, created_at, updated_at) VALUES
-  ('test@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '발자취테스터', '테스트', true, 'USER', 'ACTIVE', now(), now()),
+  ('test@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '유레카테스터', '테스트', true, 'USER', 'ACTIVE', now(), now()),
   ('walker1@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '바다산책러', '보조1', true, 'USER', 'ACTIVE', now(), now()),
   ('walker2@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '골목탐험가', '보조2', true, 'USER', 'ACTIVE', now(), now()),
   ('walker3@eureka.local', '$2a$10$6ZeIfKPHWb0AquM1UIOLXepF7aW0VXqCHs5LyJqz5Cv4LHK4saklq', '맛집지도', '보조3', true, 'USER', 'ACTIVE', now(), now());
