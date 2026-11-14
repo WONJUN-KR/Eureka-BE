@@ -62,6 +62,7 @@ com.eureka
 
 | 문서 | 설명 |
 |------|------|
+| `docs/ARCHITECTURE.md` | 패키지 구조 · 전체 구조 |
 | `docs/entity-design.md` | Entity 구조 (V1~V4) |
 | `docs/api-design.md` | API 엔드포인트 개요 |
 | `docs/business-rules.md` | 비즈니스 규칙 |
@@ -77,7 +78,6 @@ com.eureka
 - 2021년 학원(중앙 HTA) 팀 프로젝트 "유레카"를 최신 스택으로 리빌딩
 - 레거시 코드: https://github.com/hanheeda/teamZoom
 - GOTCHA! 프로젝트 구조를 벤치마킹
-- 상세: `docs/claude.md` 참조
 
 ## 버전별 로드맵
 

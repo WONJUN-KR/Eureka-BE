@@ -10,6 +10,7 @@
 - A  : Auth (인증)
 - U  : User (사용자)
 - P  : Post (게시글)
+- PL : Place (들른 장소)
 - I  : Image (이미지)
 - L  : Like (좋아요)
 - CM : Comment (댓글)
