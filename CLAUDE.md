@@ -40,6 +40,8 @@ com.eureka
 - PR 대상: `dev`
 - **커밋 시 반드시 메시지만 텍스트로 먼저 보여주고, 사용자가 커밋을 요청하면 실행할 것** (공동 커밋 방지)
 - **Co-Authored-By 넣지 말 것**
+- **PR 전**: `docs/review-rules.md` 체크리스트 확인 + 로컬 서버로 바뀐 엔드포인트를 실제로 호출
+- **머지**: 머지 커밋(`gh pr merge --merge`), 스쿼시 X
 - **PR 머지 후**: `dev`로 체크아웃 → `git pull` → 로컬 feature 브랜치 삭제
 
 ## 개발 가이드
@@ -54,11 +56,13 @@ com.eureka
 | 비즈니스 로직 | `docs/business-rules.md` |
 | 설계 확인 | `docs/decisions.md`, `docs/flow.md` |
 | 코딩 패턴 | `docs/coding-patterns.md` |
+| 모든 작업 · PR 전 | `docs/review-rules.md` (리뷰에서 반복된 지적 + 체크리스트) |
 
 ## 문서 목록
 
 | 문서 | 설명 |
 |------|------|
+| `docs/ARCHITECTURE.md` | 패키지 구조 · 전체 구조 |
 | `docs/entity-design.md` | Entity 구조 (V1~V4) |
 | `docs/api-design.md` | API 엔드포인트 개요 |
 | `docs/business-rules.md` | 비즈니스 규칙 |
@@ -67,13 +71,13 @@ com.eureka
 | `docs/flow.md` | 화면/서비스 플로우 |
 | `docs/decisions.md` | 설계 결정 사항 |
 | `docs/coding-patterns.md` | 코딩 패턴 |
+| `docs/review-rules.md` | 리뷰 규칙 · PR 전 체크리스트 |
 
 ## 프로젝트 배경
 
 - 2021년 학원(중앙 HTA) 팀 프로젝트 "유레카"를 최신 스택으로 리빌딩
 - 레거시 코드: https://github.com/hanheeda/teamZoom
 - GOTCHA! 프로젝트 구조를 벤치마킹
-- 상세: `docs/claude.md` 참조
 
 ## 버전별 로드맵
 
